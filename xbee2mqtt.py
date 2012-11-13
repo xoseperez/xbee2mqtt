@@ -32,10 +32,10 @@ class xbee2mqtt(Daemon):
 
     buffer = dict()
 
-    def delpid(self):
+    def cleanup(self):
         self.xbee_disconnect()
         self.mqtt_disconnect()
-        Daemon.delpid(self)
+        Daemon.cleanup(self)
 
     def mqtt_connect(self):
         self.mqtt.will_set("/client/%s/status" % self.mqtt_client_id, "Offline", self.mqtt_qos, self.mqtt_retain)
@@ -52,7 +52,7 @@ class xbee2mqtt(Daemon):
 
     def mqtt_on_connect(self, obj, result_code):
         if result_code == 0:
-            self.publish("/client/%s/status" % self.mqtt_client_id, "Online")
+            self.mqtt_send_message("/client/%s/status" % self.mqtt_client_id, "Online")
         else:
             self.stop()
 
