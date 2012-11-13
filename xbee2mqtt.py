@@ -32,11 +32,10 @@ class xbee2mqtt(Daemon):
 
     buffer = dict()
 
-    def stop(self):
-        #self.xbee_disconnect()
-        #self.mqtt_disconnect()
-        #time.sleep(5)
-        Daemon.stop(self)
+    def delpid(self):
+        self.xbee_disconnect()
+        self.mqtt_disconnect()
+        Daemon.delpid(self)
 
     def mqtt_connect(self):
         self.mqtt.will_set("/client/%s/status" % self.mqtt_client_id, "Offline", self.mqtt_qos, self.mqtt_retain)
