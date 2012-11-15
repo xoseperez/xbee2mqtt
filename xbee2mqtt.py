@@ -32,10 +32,10 @@ class xbee2mqtt(Daemon):
 
     buffer = dict()
 
-    def cleanup(self):
+    def cleanup(self, signum, frame):
         self.xbee_disconnect()
         self.mqtt_disconnect()
-        Daemon.cleanup(self)
+        sys.exit()
 
     def mqtt_connect(self):
         self.mqtt.will_set("/client/%s/status" % self.mqtt_client_id, "Offline", self.mqtt_qos, self.mqtt_retain)
@@ -88,7 +88,7 @@ class xbee2mqtt(Daemon):
                     if (value == None):
                         value = sensor
                         sensor = self.default_sensor_name
-                    topic = self.topic_pattern % (device, sensor)
+                    topic = self.xbee_topic_pattern % (device, sensor)
                     self.mqtt_send_message(topic, value)
 
     def run(self):
@@ -100,7 +100,6 @@ class xbee2mqtt(Daemon):
         while True:
             time.sleep(1)
             self.mqtt.loop()
-
 
 
 if __name__ == "__main__":
