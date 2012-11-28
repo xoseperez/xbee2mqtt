@@ -29,7 +29,7 @@ class xbee2mqtt(Daemon):
     # XBEE parameters
     xbee_port = '/dev/ttyUSB0'
     xbee_baudrate = 9600
-    xbee_topic_pattern = '/raw/%s/%s'
+    xbee_topic_pattern = '/raw/xbee/%s/%s'
     xbee_default_sensor_name = 'SERIAL'
 
     buffer = dict()
@@ -46,7 +46,7 @@ class xbee2mqtt(Daemon):
         sys.exit()
 
     def mqtt_connect(self):
-        self.mqtt.will_set("/client/%s/status" % self.mqtt_client_id, "Offline", self.mqtt_qos, self.mqtt_retain)
+        self.mqtt.will_set("/gateway/%s/status" % self.mqtt_client_id, "0", self.mqtt_qos, self.mqtt_retain)
         self.mqtt.connect(self.mqtt_host, self.mqtt_port, self.mqtt_keepalive, self.mqtt_clean_session)
         self.mqtt.on_connect = self.mqtt_on_connect
         self.mqtt.on_disconnect = self.mqtt_on_disconnect
@@ -56,12 +56,14 @@ class xbee2mqtt(Daemon):
         self.mqtt.disconnect()
 
     def mqtt_send_message(self, topic, value):
-        self.log("%s %s" % (topic, value))
+        self.log("Message: %s %s" % (topic, value))
         self.mqtt.publish(topic, value, self.mqtt_qos, self.mqtt_retain)
 
     def mqtt_on_connect(self, obj, result_code):
         if result_code == 0:
-            self.mqtt_send_message("/client/%s/status" % self.mqtt_client_id, 1)
+            self.log("Connected to Mosquitto broker")
+            self.mqtt_send_message("/gateway/%s/status" % self.mqtt_client_id, "1")
+            self.xbee_connect()
         else:
             self.stop()
 
@@ -74,6 +76,7 @@ class xbee2mqtt(Daemon):
         None
 
     def xbee_connect(self):
+        self.log("Connecting to Xbee")
         self.ser = serial.Serial(self.xbee_port, self.xbee_baudrate)
         self.xbee = XBee(self.ser, callback=self.xbee_on_message)
 
@@ -109,7 +112,6 @@ class xbee2mqtt(Daemon):
         self.log("Starting")
         self.mqtt = mosquitto.Mosquitto(self.mqtt_client_id)
         self.mqtt_connect()
-        self.xbee_connect()
 
         while True:
             time.sleep(1)
