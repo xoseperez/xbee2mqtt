@@ -11,7 +11,8 @@ received from a remote XBee.
 """
 
 import time
-import serial
+#import serial
+import dummy_serial as serial
 from datetime import datetime
 
 from xbee import XBee
@@ -31,8 +32,8 @@ def message_received(packet):
 def process(device, frame_id, data):
     if (frame_id == 90):
         buffer[device] = buffer.get(device,'') + data
-        lines = buffer[device].splitlines(True)
-        if (lines.count > 1):
+        lines = (buffer[device] + '\n').splitlines(False)
+        if (len(lines) > 1):
             buffer[device] = lines[-1:][0]
             lines = lines[:-1]
             for line in lines:
@@ -51,7 +52,7 @@ def save(device, sensor, value):
     log(device, sensor, value)
 
 def log(device, sensor, value):
-    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     print "[%s] %s @ %s = %s" % (timestamp, sensor if sensor is not None else 'DEFAULT', device, value)
 
 # serial port

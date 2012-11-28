@@ -7,7 +7,9 @@ __copyright__ = "Copyright (C) Xose Perez"
 
 import sys
 import time
-import serial
+from datetime import datetime
+import dummy_serial as serial
+#import serial
 
 import mosquitto
 from xbee import XBee
@@ -28,13 +30,19 @@ class xbee2mqtt(Daemon):
     xbee_port = '/dev/ttyUSB0'
     xbee_baudrate = 9600
     xbee_topic_pattern = '/raw/%s/%s'
-    xbee_default_sensor_name = 'UART'
+    xbee_default_sensor_name = 'SERIAL'
 
     buffer = dict()
+
+    def log(self, message):
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        sys.stdout.write("[%s] %s\n" % (timestamp, message))
+        sys.stdout.flush()
 
     def cleanup(self, signum, frame):
         self.xbee_disconnect()
         self.mqtt_disconnect()
+        self.log("Exiting")
         sys.exit()
 
     def mqtt_connect(self):
@@ -48,11 +56,12 @@ class xbee2mqtt(Daemon):
         self.mqtt.disconnect()
 
     def mqtt_send_message(self, topic, value):
+        self.log("%s %s" % (topic, value))
         self.mqtt.publish(topic, value, self.mqtt_qos, self.mqtt_retain)
 
     def mqtt_on_connect(self, obj, result_code):
         if result_code == 0:
-            self.mqtt_send_message("/client/%s/status" % self.mqtt_client_id, "Online")
+            self.mqtt_send_message("/client/%s/status" % self.mqtt_client_id, 1)
         else:
             self.stop()
 
@@ -77,10 +86,14 @@ class xbee2mqtt(Daemon):
         frame_id = int(packet['frame_id'])
         data = packet['data']
 
+        # Data sent through the serial connection of the remote radio
         if (frame_id == 90):
+
+            # Some streams arrive split in different packets
+            # we buffer the data until we get an EOL
             self.buffer[device] = self.buffer.get(device,'') + data
-            lines = self.buffer[device].splitlines(True)
-            if (lines.count > 1):
+            lines = (self.buffer[device] + '\n').splitlines(True)
+            if (len(lines) > 1):
                 self.buffer[device] = lines[-1:][0]
                 lines = lines[:-1]
                 for line in lines:
@@ -93,6 +106,7 @@ class xbee2mqtt(Daemon):
 
     def run(self):
 
+        self.log("Starting")
         self.mqtt = mosquitto.Mosquitto(self.mqtt_client_id)
         self.mqtt_connect()
         self.xbee_connect()
@@ -103,7 +117,7 @@ class xbee2mqtt(Daemon):
 
 
 if __name__ == "__main__":
-    daemon = xbee2mqtt('/tmp/xbee2mqtt.pid')
+    daemon = xbee2mqtt('/tmp/xbee2mqtt.pid', stdout='/tmp/xbee2mqtt.log', stderr='/tmp/xbee2mqtt.err')
     if len(sys.argv) == 2:
         if 'start' == sys.argv[1]:
             daemon.start()
