@@ -3,7 +3,8 @@
 """
 receive_samples_async.py
 
-By Paul Malmsten, 2010
+Original by
+Paul Malmsten, 2010
 pmalmsten@gmail.com
 
 This example reads the serial port and asynchronously processes IO data
@@ -24,36 +25,42 @@ BAUD_RATE = 9600
 buffer = dict()
 
 def message_received(packet):
+
     device = packet['source_addr_long']
     frame_id = int(packet['frame_id'])
-    data = packet['data']
-    process(device, frame_id, data)
 
-def process(device, frame_id, data):
+    # Data sent through the serial connection of the remote radio
     if (frame_id == 90):
-        buffer[device] = buffer.get(device,'') + data
-        lines = (buffer[device] + '\n').splitlines(False)
-        if (len(lines) > 1):
-            buffer[device] = lines[-1:][0]
-            lines = lines[:-1]
-            for line in lines:
-                if (line.find(':') > -1):
-                    try:
-                        sensor, value = line.split(':', 2)
-                    except:
-                        sensor = None
-                        value = line
-                else:
-                    sensor = None
-                    value = line
-                save(device, sensor, value.rstrip())
 
-def save(device, sensor, value):
-    log(device, sensor, value)
+        # Some streams arrive split in different packets
+        # we buffer the data until we get an EOL
+        buffer[device] = buffer.get(device,'') + packet['data']
+        count = buffer[device].count('\n')
+        if (count):
+            lines = buffer[device].splitlines()
+            try:
+                buffer[device] = lines[count:][0]
+            except:
+                buffer[device] = ''
+            for line in lines[:count]:
+                line = line.rstrip()
+                try:
+                    sensor, value = line.split(':', 1)
+                except:
+                    value = line
+                    sensor = 'serial'
+                log(device, sensor, value)
+
+    # Data received from an IO data sample
+    if (frame_id == 92):
+        for sensor, value in packet['samples'].iteritems():
+            if sensor[:3] == 'dio':
+                value = '1' if value else '0'
+            log(device, sensor, value)
 
 def log(device, sensor, value):
-    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    print "[%s] %s @ %s = %s" % (timestamp, sensor if sensor is not None else 'DEFAULT', device, value)
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
+    print "[%s] %s @ %s = %s" % (timestamp, sensor if sensor is not None else 'serial', device, value)
 
 # serial port
 ser = serial.Serial(PORT, BAUD_RATE)

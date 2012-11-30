@@ -18,7 +18,7 @@ from daemon import Daemon
 class xbee2mqtt(Daemon):
 
     # MQTT params
-    mqtt_client_id='xbee2mqtt'
+    mqtt_client_id='xbee'
     mqtt_host='localhost'
     mqtt_port=1883
     mqtt_keepalive=60
@@ -29,13 +29,13 @@ class xbee2mqtt(Daemon):
     # XBEE parameters
     xbee_port = '/dev/ttyUSB0'
     xbee_baudrate = 9600
-    xbee_topic_pattern = '/raw/xbee/%s/%s'
-    xbee_default_sensor_name = 'SERIAL'
+    xbee_topic_pattern = '/raw/%s/%s/%s'
+    xbee_default_sensor_name = 'serial'
 
     buffer = dict()
 
     def log(self, message):
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
         sys.stdout.write("[%s] %s\n" % (timestamp, message))
         sys.stdout.flush()
 
@@ -57,7 +57,7 @@ class xbee2mqtt(Daemon):
 
     def mqtt_send_message(self, topic, value):
         self.log("Message: %s %s" % (topic, value))
-        self.mqtt.publish(topic, value, self.mqtt_qos, self.mqtt_retain)
+        self.mqtt.publish(topic, str(value), self.mqtt_qos, self.mqtt_retain)
 
     def mqtt_on_connect(self, obj, result_code):
         if result_code == 0:
@@ -85,27 +85,40 @@ class xbee2mqtt(Daemon):
         self.ser.close()
 
     def xbee_on_message(self, packet):
+
         device = packet['source_addr_long']
         frame_id = int(packet['frame_id'])
-        data = packet['data']
 
         # Data sent through the serial connection of the remote radio
         if (frame_id == 90):
 
             # Some streams arrive split in different packets
             # we buffer the data until we get an EOL
-            self.buffer[device] = self.buffer.get(device,'') + data
-            lines = (self.buffer[device] + '\n').splitlines(True)
-            if (len(lines) > 1):
-                self.buffer[device] = lines[-1:][0]
-                lines = lines[:-1]
-                for line in lines:
-                    sensor, value = line.rstrip().split(':', 2)
-                    if (value == None):
-                        value = sensor
-                        sensor = self.default_sensor_name
-                    topic = self.xbee_topic_pattern % (device, sensor)
+            self.buffer[device] = self.buffer.get(device,'') + packet['data']
+            count = self.buffer[device].count('\n')
+            if (count):
+                lines = self.buffer[device].splitlines()
+                try:
+                    self.buffer[device] = lines[count:][0]
+                except:
+                    self.buffer[device] = ''
+                for line in lines[:count]:
+                    line = line.rstrip()
+                    try:
+                        sensor, value = line.split(':', 1)
+                    except:
+                        value = line
+                        sensor = self.xbee_default_sensor_name
+                    topic = self.xbee_topic_pattern % (self.mqtt_client_id, device, sensor)
                     self.mqtt_send_message(topic, value)
+
+        # Data received from an IO data sample
+        if (frame_id == 92):
+            for sensor, value in packet['samples'].iteritems():
+                topic = self.xbee_topic_pattern % (self.mqtt_client_id, device, sensor)
+                if sensor[:3] == 'dio':
+                    value = '1' if value else '0'
+                self.mqtt_send_message(topic, value)
 
     def run(self):
 
@@ -117,8 +130,8 @@ class xbee2mqtt(Daemon):
             time.sleep(1)
             self.mqtt.loop()
 
-
 if __name__ == "__main__":
+
     daemon = xbee2mqtt('/tmp/xbee2mqtt.pid', stdout='/tmp/xbee2mqtt.log', stderr='/tmp/xbee2mqtt.err')
     if len(sys.argv) == 2:
         if 'start' == sys.argv[1]:
