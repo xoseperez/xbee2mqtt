@@ -45,6 +45,8 @@ class Mapper(object):
 
     default_sensor_name = 'serial'
     default_topic_pattern = '/raw/xbee/%s/%s'
+    mappings = []
+    _mappings = None
 
     buffer = dict()
 
@@ -86,7 +88,11 @@ class Mapper(object):
                 self.map(device, sensor, value)
 
     def map(self, device, sensor, value):
-        topic = self.default_topic_pattern % (device, sensor)
+        if self._mappings is None:
+            self._mappings = {}
+            for mapping in self.mappings:
+                self._mappings[mapping['sensor'] + '@' + mapping['address']] = mapping['topic']
+        topic = self._mappings.get(sensor + '@' + device, self.default_topic_pattern % (device, sensor))
         self.on_message(topic, value)
 
     def on_message(self, topic, value):
@@ -206,6 +212,7 @@ if __name__ == "__main__":
     mapper = Mapper()
     mapper.default_sensor_name = config.get('mapper', 'default_sensor_name', 'serial')
     mapper.default_topic_pattern = config.get('mapper', 'default_topic_pattern', '/raw/xbee/%s/%s')
+    mapper.mappings = config.get('mapper', 'mappings', [])
     broker.mapper = mapper
 
     if len(sys.argv) == 2:

@@ -21,3 +21,10 @@ mqtt:
 mapper:
     default_sensor_name: serial
     default_topic_pattern: /raw/xbee/%s/%s
+    mappings:
+        -   address: 0013a20040401122
+            sensor: adc7
+            topic: /benavent/entrance/sensor/battery
+        -   address: 0013a20040401122
+            sensor: adc2
+            topic: /benavent/entrance/sensor/temperature
