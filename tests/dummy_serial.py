@@ -1,7 +1,3 @@
-__author__  = 'Xose Perez'
-__email__   = 'xose.perez@gmail.com'
-__license__ = 'TBD'
-
 import binascii
 
 MESSAGES = [

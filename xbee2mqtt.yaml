@@ -1,0 +1,23 @@
+broker:
+    pidfile: /tmp/xbee2mqtt.pid
+    stderr: /tmp/xbee2mqtt.err
+    stdout: /tmp/xbee2mqtt.log
+    debug: True
+
+radio:
+    port: /dev/ttyUSB0
+    baudrate: 9600
+
+mqtt:
+    client_id: xbee
+    host: localhost
+    port: 1883
+    keepalive: 60
+    clean_session: False
+    qos: 0
+    retain: True
+    status_topic: /device/xbee/status
+
+mapper:
+    default_sensor_name: serial
+    default_topic_pattern: /raw/xbee/%s/%s
