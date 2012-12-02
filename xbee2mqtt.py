@@ -21,14 +21,14 @@ from daemon import Daemon
 
 class Mosquitto(_Mosquitto):
 
-    client_id = 'xbee'
+    client_id = 'xbee2mqtt'
     host = 'localhost'
     port = 1883
     keepalive = 60
     clean_session = False
     qos = 0
     retain = False
-    status_topic = '/gateway/xbee/status'
+    status_topic = '/service/xbee2mqtt/status'
 
     def connect(self):
         self.will_set(self.status_topic, "0", self.qos, self.retain)
@@ -121,7 +121,7 @@ class Broker(Daemon):
     def cleanup(self, signum, frame):
         self.xbee_disconnect()
         self.mqtt_disconnect()
-        self.log("Exiting")
+        self.log("[INFO] Exiting")
         sys.exit()
 
     def mqtt_connect(self):
@@ -134,12 +134,12 @@ class Broker(Daemon):
         self.mqtt.disconnect()
 
     def mqtt_send_message(self, topic, value):
-        self.log("Message: %s %s" % (topic, value))
+        self.log("[MESSAGE] %s %s" % (topic, value))
         self.mqtt.publish(topic, value)
 
     def mqtt_on_connect(self, obj, result_code):
         if result_code == 0:
-            self.log("Connected to Mosquitto broker")
+            self.log("[INFO] Connected to Mosquitto broker")
             self.mqtt.send_connected()
         else:
             self.stop()
@@ -153,7 +153,7 @@ class Broker(Daemon):
         None
 
     def xbee_connect(self):
-        self.log("Connecting to Xbee")
+        self.log("[INFO] Connecting to Xbee")
         try:
             self.xbee = XBee(self.serial, callback=self.mapper.process)
         except:
@@ -165,7 +165,7 @@ class Broker(Daemon):
 
     def run(self):
 
-        self.log("Starting " + __app__ + " v" + __version__)
+        self.log("[INFO] Starting " + __app__ + " v" + __version__)
         self.mapper.on_message = self.mqtt_send_message
         self.mqtt_connect()
         self.xbee_connect()
@@ -194,10 +194,10 @@ if __name__ == "__main__":
 
     config = Config('xbee2mqtt.yaml')
 
-    broker = Broker(config.get('broker', 'pidfile', '/tmp/xbee2mqtt.pid'))
-    broker.stdout = config.get('broker', 'stdout', '/dev/null')
-    broker.stderr = config.get('broker', 'stderr', '/dev/null')
-    broker.debug = config.get('broker', 'debug', False)
+    broker = Broker(config.get('daemon', 'pidfile', '/tmp/xbee2mqtt.pid'))
+    broker.stdout = config.get('daemon', 'stdout', '/dev/null')
+    broker.stderr = config.get('daemon', 'stderr', '/dev/null')
+    broker.debug = config.get('daemon', 'debug', False)
 
     serial = Serial(
         config.get('radio', 'port', '/dev/ttyUSB0'),
