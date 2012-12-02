@@ -19,12 +19,12 @@ mqtt:
     status_topic: /device/xbee/status
 
 mapper:
-    default_sensor_name: serial
+    default_port_name: serial
     default_topic_pattern: /raw/xbee/%s/%s
     mappings:
         -   address: 0013a20040401122
-            sensor: adc7
+            port: adc7
             topic: /benavent/entrance/sensor/battery
         -   address: 0013a20040401122
-            sensor: adc2
+            port: adc2
             topic: /benavent/entrance/sensor/temperature

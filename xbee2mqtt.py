@@ -43,7 +43,7 @@ class Mosquitto(_Mosquitto):
 
 class Mapper(object):
 
-    default_sensor_name = 'serial'
+    default_port_name = 'serial'
     default_topic_pattern = '/raw/xbee/%s/%s'
     mappings = []
     _mappings = None
@@ -55,7 +55,7 @@ class Mapper(object):
 
     def process(self, packet):
 
-        device = packet['source_addr_long']
+        address = packet['source_addr_long']
         frame_id = int(packet['frame_id'])
 
         # Data sent through the serial connection of the remote radio
@@ -63,36 +63,36 @@ class Mapper(object):
 
             # Some streams arrive split in different packets
             # we buffer the data until we get an EOL
-            self.buffer[device] = self.buffer.get(device,'') + packet['data']
-            count = self.buffer[device].count('\n')
+            self.buffer[address] = self.buffer.get(address,'') + packet['data']
+            count = self.buffer[address].count('\n')
             if (count):
-                lines = self.buffer[device].splitlines()
+                lines = self.buffer[address].splitlines()
                 try:
-                    self.buffer[device] = lines[count:][0]
+                    self.buffer[address] = lines[count:][0]
                 except:
-                    self.buffer[device] = ''
+                    self.buffer[address] = ''
                 for line in lines[:count]:
                     line = line.rstrip()
                     try:
-                        sensor, value = line.split(':', 1)
+                        port, value = line.split(':', 1)
                     except:
                         value = line
-                        sensor = self.default_sensor_name
-                    self.map(device, sensor, value)
+                        port = self.default_port_name
+                    self.map(address, port, value)
 
         # Data received from an IO data sample
         if (frame_id == 92):
-            for sensor, value in packet['samples'].iteritems():
-                if sensor[:3] == 'dio':
+            for port, value in packet['samples'].iteritems():
+                if port[:3] == 'dio':
                     value = '1' if value else '0'
-                self.map(device, sensor, value)
+                self.map(address, port, value)
 
-    def map(self, device, sensor, value):
+    def map(self, address, port, value):
         if self._mappings is None:
             self._mappings = {}
             for mapping in self.mappings:
-                self._mappings[mapping['sensor'] + '@' + mapping['address']] = mapping['topic']
-        topic = self._mappings.get(sensor + '@' + device, self.default_topic_pattern % (device, sensor))
+                self._mappings["%s:%s" % (mapping['address'], mapping['port'])] = mapping['topic']
+        topic = self._mappings.get("%s:%s" % (address, port), self.default_topic_pattern % (address, port))
         self.on_message(topic, value)
 
     def on_message(self, topic, value):
@@ -206,11 +206,11 @@ if __name__ == "__main__":
     mqtt.clean_session = config.get('mqtt', 'clean_session', False)
     mqtt.qos = config.get('mqtt', 'qos', 0)
     mqtt.retain = config.get('mqtt', 'retain', True)
-    mqtt.status_topic = config.get('mqtt', 'status_topic', '/device/xbee/status')
+    mqtt.status_topic = config.get('mqtt', 'status_topic', '/gateway/xbee/status')
     broker.mqtt = mqtt
 
     mapper = Mapper()
-    mapper.default_sensor_name = config.get('mapper', 'default_sensor_name', 'serial')
+    mapper.default_port_name = config.get('mapper', 'default_port_name', 'serial')
     mapper.default_topic_pattern = config.get('mapper', 'default_topic_pattern', '/raw/xbee/%s/%s')
     mapper.mappings = config.get('mapper', 'mappings', [])
     broker.mapper = mapper
