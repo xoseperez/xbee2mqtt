@@ -22,9 +22,6 @@ mapper:
     default_port_name: serial
     default_topic_pattern: /raw/xbee/%s/%s
     mappings:
-        -   address: 0013a20040401122
-            port: adc7
-            topic: /benavent/entrance/sensor/battery
-        -   address: 0013a20040401122
-            port: adc2
-            topic: /benavent/entrance/sensor/temperature
+        0013a20040401122:
+            adc7: /benavent/entrance/sensor/battery
+            adc2: /benavent/entrance/sensor/temperature

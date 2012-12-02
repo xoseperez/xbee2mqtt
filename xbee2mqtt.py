@@ -45,10 +45,9 @@ class Mapper(object):
 
     default_port_name = 'serial'
     default_topic_pattern = '/raw/xbee/%s/%s'
-    mappings = []
-    _mappings = None
 
     buffer = dict()
+    mapping = {}
 
     def __init__(self):
         None
@@ -87,12 +86,19 @@ class Mapper(object):
                     value = '1' if value else '0'
                 self.map(address, port, value)
 
+    def load_map(self, map):
+        for address, ports in self.mappings.iteritems():
+            for port, value in ports.iteritems():
+                try:
+                    self.mapping[address, port] = value['topic']
+                except:
+                    self.mapping[address, port] = value
+
     def map(self, address, port, value):
-        if self._mappings is None:
-            self._mappings = {}
-            for mapping in self.mappings:
-                self._mappings["%s:%s" % (mapping['address'], mapping['port'])] = mapping['topic']
-        topic = self._mappings.get("%s:%s" % (address, port), self.default_topic_pattern % (address, port))
+        try:
+            topic = self.mapping[(address, port)]
+        except:
+            topic = self.default_topic_pattern % (address, port)
         self.on_message(topic, value)
 
     def on_message(self, topic, value):
@@ -212,7 +218,7 @@ if __name__ == "__main__":
     mapper = Mapper()
     mapper.default_port_name = config.get('mapper', 'default_port_name', 'serial')
     mapper.default_topic_pattern = config.get('mapper', 'default_topic_pattern', '/raw/xbee/%s/%s')
-    mapper.mappings = config.get('mapper', 'mappings', [])
+    mapper.load_map(config.get('mapper', 'mappings', []))
     broker.mapper = mapper
 
     if len(sys.argv) == 2:
