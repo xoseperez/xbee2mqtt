@@ -7,8 +7,8 @@ sys.path.insert(0,parentdir)
 import time
 from datetime import datetime
 
-from dummy_serial import Serial
-#from serial import Serial
+#from dummy_serial import Serial
+from serial import Serial
 from xbee import XBee
 from xbee2mqtt import Mapper, Config
 
@@ -17,7 +17,7 @@ BAUD_RATE = 9600
 
 def log(topic, value):
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
-    print "[%s] %s = %s" % (timestamp, topic, value)
+    print "[%s] %s %s" % (timestamp, topic, value)
 
 # config
 config = Config('../xbee2mqtt.yaml')
