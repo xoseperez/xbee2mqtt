@@ -7,8 +7,8 @@ sys.path.insert(0,parentdir)
 import time
 from datetime import datetime
 
-from dummy_serial import Serial
-#from serial import Serial
+#from dummy_serial import Serial
+from serial import Serial
 from xbee import XBee
 from xbee2mqtt import Gateway, Config
 from libs.MessagePreprocessor import MessagePreprocessor
