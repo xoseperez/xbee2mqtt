@@ -13,11 +13,12 @@ import time
 from datetime import datetime
 import yaml
 
-from tests.dummy_serial import Serial
-#from serial import Serial
+#from tests.dummy_serial import Serial
+from serial import Serial
 from mosquitto import Mosquitto as _Mosquitto
 from xbee import XBee
-from daemon import Daemon
+from libs.daemon import Daemon
+from libs.MessagePreprocessor import MessagePreprocessor
 
 class Mosquitto(_Mosquitto):
 
@@ -41,13 +42,12 @@ class Mosquitto(_Mosquitto):
         self.publish(self.status_topic, "1")
 
 
-class Mapper(object):
+class Gateway(object):
 
     default_port_name = 'serial'
-    default_topic_pattern = '/raw/xbee/%s/%s'
+    processor = None
 
     buffer = dict()
-    mapping = {}
 
     def __init__(self):
         None
@@ -87,7 +87,7 @@ class Mapper(object):
                 self.map(address, port, value)
 
     def load_map(self, map):
-        for address, ports in self.mappings.iteritems():
+        for address, ports in map.iteritems():
             for port, value in ports.iteritems():
                 try:
                     self.mapping[address, port] = value['topic']
@@ -95,10 +95,7 @@ class Mapper(object):
                     self.mapping[address, port] = value
 
     def map(self, address, port, value):
-        try:
-            topic = self.mapping[(address, port)]
-        except:
-            topic = self.default_topic_pattern % (address, port)
+        topic, value = self.processor.map(address, port, value)
         self.on_message(topic, value)
 
     def on_message(self, topic, value):
@@ -109,7 +106,7 @@ class Broker(Daemon):
 
     debug = True
     serial = None
-    mapper = None
+    gateway = None
     mqtt = None
 
     def log(self, message):
@@ -155,7 +152,7 @@ class Broker(Daemon):
     def xbee_connect(self):
         self.log("[INFO] Connecting to Xbee")
         try:
-            self.xbee = XBee(self.serial, callback=self.mapper.process)
+            self.xbee = XBee(self.serial, callback=self.gateway.process)
         except:
             self.stop()
 
@@ -166,7 +163,7 @@ class Broker(Daemon):
     def run(self):
 
         self.log("[INFO] Starting " + __app__ + " v" + __version__)
-        self.mapper.on_message = self.mqtt_send_message
+        self.gateway.on_message = self.mqtt_send_message
         self.mqtt_connect()
         self.xbee_connect()
 
@@ -215,11 +212,15 @@ if __name__ == "__main__":
     mqtt.status_topic = config.get('mqtt', 'status_topic', '/gateway/xbee/status')
     broker.mqtt = mqtt
 
-    mapper = Mapper()
-    mapper.default_port_name = config.get('mapper', 'default_port_name', 'serial')
-    mapper.default_topic_pattern = config.get('mapper', 'default_topic_pattern', '/raw/xbee/%s/%s')
-    mapper.load_map(config.get('mapper', 'mappings', []))
-    broker.mapper = mapper
+    processor = MessagePreprocessor()
+    processor.default_topic_pattern = config.get('processor', 'default_topic_pattern', '/raw/xbee/%s/%s')
+    processor.load_map(config.get('processor', 'mappings', []))
+
+    gateway = Gateway()
+    gateway.default_port_name = config.get('gateway', 'default_port_name', 'serial')
+    gateway.processor = processor
+
+    broker.gateway = gateway
 
     if len(sys.argv) == 2:
         if 'start' == sys.argv[1]:

@@ -10,28 +10,35 @@ from datetime import datetime
 from dummy_serial import Serial
 #from serial import Serial
 from xbee import XBee
-from xbee2mqtt import Mapper, Config
-
-PORT = '/dev/ttyUSB0'
-BAUD_RATE = 9600
+from xbee2mqtt import Gateway, Config
+from libs.MessagePreprocessor import MessagePreprocessor
 
 def log(topic, value):
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
-    print "[%s] %s = %s" % (timestamp, topic, value)
+    print "[%s] %s %s" % (timestamp, topic, value)
 
 # config
 config = Config('../xbee2mqtt.yaml')
 
-# mapper
-mapper = Mapper()
-mapper.on_message = log
-mapper.mappings = config.get('mapper', 'mappings', [])
+# processor
+processor = MessagePreprocessor()
+processor.default_topic_pattern = config.get('processor', 'default_topic_pattern', '/raw/xbee/%s/%s')
+processor.load_map(config.get('processor', 'mappings', []))
+
+# gateway
+gateway = Gateway()
+gateway.default_port_name = config.get('gateway', 'default_port_name', 'serial')
+gateway.processor = processor
+gateway.on_message = log
 
 # serial port
-serial = Serial(PORT, BAUD_RATE)
+serial = Serial(
+    config.get('radio', 'port', '/dev/ttyUSB0'),
+    config.get('radio', 'baudrate', 9600)
+)
 
 # create API object, which spawns a new thread
-xbee = XBee(serial, callback=mapper.process)
+xbee = XBee(serial, callback=gateway.process)
 
 # do other stuff in the main thread
 while True:

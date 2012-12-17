@@ -18,10 +18,29 @@ mqtt:
     retain: True
     status_topic: /service/xbee2mqtt/status
 
-mapper:
+gateway:
     default_port_name: serial
-    default_topic_pattern: /raw/xbee/%s/%s
+
+processor:
+    default_topic_pattern: /raw/xbee/{address}/{port}
     mappings:
+
         0013a20040401122:
-            adc7: /benavent/entrance/sensor/battery
+
+            status:
+                topic: /benavent/entrance/sensor/status
+                filter:
+                    type: enum
+                    parameters:
+                        0: Offline
+                        1: Online
+
+            adc7:
+                topic: /benavent/entrance/sensor/battery
+                filter:
+                    type: lineal
+                    parameters:
+                        a: 1.171875
+                        b: 0
+
             adc2: /benavent/entrance/sensor/temperature
