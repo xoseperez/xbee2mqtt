@@ -1,3 +1,6 @@
 *.pyo
 *.pyc
 xbee
+xbee2mqtt.yaml
+var/log/*
+var/run/*
