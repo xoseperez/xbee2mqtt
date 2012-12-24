@@ -13,9 +13,14 @@ from xbee import XBee
 from xbee2mqtt import Gateway, Config
 from libs.MessagePreprocessor import MessagePreprocessor
 
-def log(topic, value):
+def log(response):
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
-    print "[%s] %s %s" % (timestamp, topic, value)
+    publish = '(NOT PUBLISHED)' if response['publish'] == False else ''
+    print "[%s] %s %s %s" % (timestamp, response['topic'], response['value'], publish)
+    if response['publish'] and response['timestampable']:
+        ts = datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
+        print "[%s] %s %s" % (timestamp, response['topic'] + '/timestamp', ts)
+
 
 # config
 config = Config('../xbee2mqtt.yaml')
@@ -23,6 +28,7 @@ config = Config('../xbee2mqtt.yaml')
 # processor
 processor = MessagePreprocessor()
 processor.default_topic_pattern = config.get('processor', 'default_topic_pattern', '/raw/xbee/%s/%s')
+processor.publish_undefined_topics = config.get('processor', 'publish_undefined_topics', True)
 processor.load_map(config.get('processor', 'mappings', []))
 
 # gateway

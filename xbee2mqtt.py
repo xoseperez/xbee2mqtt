@@ -86,19 +86,18 @@ class Gateway(object):
                     value = '1' if value else '0'
                 self.map(address, port, value)
 
-    def load_map(self, map):
-        for address, ports in map.iteritems():
-            for port, value in ports.iteritems():
-                try:
-                    self.mapping[address, port] = value['topic']
-                except:
-                    self.mapping[address, port] = value
-
     def map(self, address, port, value):
-        topic, value = self.processor.map(address, port, value)
-        self.on_message(topic, value)
+        self.on_message(self.processor.map(address, port, value))
 
-    def on_message(self, topic, value):
+    def on_message(self, response):
+        """
+        The 'response' object contains the following attributes:
+            * topic The topic string
+            * value The topic value
+            * publish Weather it has to be published to the broker or not
+            * timestampable Weather a timestamp topic has to be published as
+              well or not
+        """
         None
 
 
@@ -111,7 +110,7 @@ class Broker(Daemon):
 
     def log(self, message):
         if self.debug:
-            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
+            timestamp = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%f')
             sys.stdout.write("[%s] %s\n" % (timestamp, message))
             sys.stdout.flush()
 
@@ -130,9 +129,16 @@ class Broker(Daemon):
     def mqtt_disconnect(self):
         self.mqtt.disconnect()
 
-    def mqtt_send_message(self, topic, value):
-        self.log("[MESSAGE] %s %s" % (topic, value))
-        self.mqtt.publish(topic, value)
+    def mqtt_send_message(self, response):
+        publish = '(NOT PUBLISHED)' if response['publish'] == False else ''
+        self.log("[MESSAGE] %s %s %s" % (response['topic'], response['value'], publish))
+        if response['publish']:
+            self.mqtt.publish(response['topic'], response['value'])
+            if response['timestampable']:
+                timestamp = datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
+                self.mqtt.publish(response['topic'] + '/timestamp', timestamp)
+
+
 
     def mqtt_on_connect(self, obj, result_code):
         if result_code == 0:
@@ -214,6 +220,7 @@ if __name__ == "__main__":
 
     processor = MessagePreprocessor()
     processor.default_topic_pattern = config.get('processor', 'default_topic_pattern', '/raw/xbee/%s/%s')
+    processor.publish_undefined_topics = config.get('processor', 'publish_undefined_topics', True)
     processor.load_map(config.get('processor', 'mappings', []))
 
     gateway = Gateway()

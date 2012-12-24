@@ -23,6 +23,7 @@ gateway:
 
 processor:
     default_topic_pattern: /raw/xbee/{address}/{port}
+    publish_undefined_topics: False
     mappings:
 
         0013a200407b6d06:
@@ -31,11 +32,19 @@ processor:
             energy: /benavent/general/energy
         
         0013a200406bfd09:
-            battery: 
+            adc7: 
                 topic: /benavent/door/sensor/battery
+                timestampable: True
                 filter:
-                    type: lineal
+                    type: linear
                     parameters:
                         slope: 1.171875
                         offset: 0
-            dio12: /benavent/door/status
+            dio12: 
+                topic: /benavent/door/status
+                filter:
+                    type: enum
+                    parameters:
+                        0: 'Closed'
+                        1: 'Open'
+

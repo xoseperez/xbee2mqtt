@@ -2,9 +2,10 @@ import binascii
 
 MESSAGES = [
    #'17000013a20040401122fffe02443204',                            # Remote AT request: ATD24
-   '900013a20040401122012340' + binascii.hexlify('status:1\n'),    # Receive well-formed serial packet
-   '900013a20040401122012340' + binascii.hexlify('abcdefgh\n'),    # Receive random serial packet
-   '920013a2004040112201230101100384100201000081'                  # IO Sample DIO0:0, DIO1:1, DIO12:1, ADC2:256 ADC7(Supply Voltage):129
+   #'900013a20040401122012340' + binascii.hexlify('status:1\n'),    # Receive well-formed serial packet
+   #'900013a20040401122012340' + binascii.hexlify('abcdefgh\n'),    # Receive random serial packet
+   '920013a2004040112201230101100384100201000081',                  # IO Sample DIO0:0, DIO1:1, DIO12:1, ADC2:256 ADC7(Supply Voltage):129
+   '920013a200406bfd090123010110008010000B00',                      # IO Sample DIO12:1, ADC7(Supply Voltage):2816
 ]
 
 class Serial(object):
