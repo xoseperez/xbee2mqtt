@@ -1,7 +1,7 @@
 daemon:
-    pidfile: var/run/xbee2mqtt.pid
-    stderr: var/log/xbee2mqtt.err
-    stdout: var/log/xbee2mqtt.log
+    pidfile: /tmp/xbee2mqtt.pid
+    stderr: /tmp/xbee2mqtt.err
+    stdout: /tmp/xbee2mqtt.log
     debug: True
 
 radio:
