@@ -7,6 +7,7 @@ daemon:
 radio:
     port: /dev/ttyUSB0
     baudrate: 9600
+    default_port_name: serial
 
 mqtt:
     client_id: xbee2mqtt
@@ -18,33 +19,29 @@ mqtt:
     retain: True
     status_topic: /service/xbee2mqtt/status
 
-gateway:
-    default_port_name: serial
-
-processor:
+router:
     default_topic_pattern: /raw/xbee/{address}/{port}
     publish_undefined_topics: False
-    mappings:
-
+    routes:
         0013a200407b6d06:
             battery: /benavent/powermeter/sensor/battery
             power: /benavent/general/power
             energy: /benavent/general/energy
-        
         0013a200406bfd09:
-            adc7: 
-                topic: /benavent/door/sensor/battery
-                timestampable: True
-                filter:
-                    type: linear
-                    parameters:
-                        slope: 1.171875
-                        offset: 0
-            dio12: 
-                topic: /benavent/door/status
-                filter:
-                    type: enum
-                    parameters:
-                        0: 'Closed'
-                        1: 'Open'
+            adc7: /benavent/door/sensor/battery
+            dio12: /benavent/door/status
+
+processor:
+    filters:
+        /benavent/door/sensor/battery:
+            type: linear
+            parameters:
+                slope: 1.171875
+                offset: 0
+
+        /benavent/door/status:
+            type: enum
+            parameters:
+                0: 'Closed'
+                1: 'Open'
 

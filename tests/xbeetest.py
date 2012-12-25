@@ -7,35 +7,31 @@ sys.path.insert(0,parentdir)
 import time
 from datetime import datetime
 
-#from dummy_serial import Serial
-from serial import Serial
-from xbee import XBee
-from xbee2mqtt import Gateway, Config
-from libs.MessagePreprocessor import MessagePreprocessor
+from dummy_serial import Serial
+#from serial import Serial
+from libs.XBee import XBee
+from libs.Config import Config
+from libs.Router import Router
+from libs.Processor import Processor
 
-def log(response):
+def log(address, port, value):
+    topic = router.forward(address, port)
+    value = processor.map(topic, value)
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
-    publish = '(NOT PUBLISHED)' if response['publish'] == False else ''
-    print "[%s] %s %s %s" % (timestamp, response['topic'], response['value'], publish)
-    if response['publish'] and response['timestampable']:
-        ts = datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
-        print "[%s] %s %s" % (timestamp, response['topic'] + '/timestamp', ts)
-
+    print "[%s] %s %s %s %s" % (timestamp, address, port, topic, value)
 
 # config
 config = Config('../xbee2mqtt.yaml')
 
-# processor
-processor = MessagePreprocessor()
-processor.default_topic_pattern = config.get('processor', 'default_topic_pattern', '/raw/xbee/%s/%s')
-processor.publish_undefined_topics = config.get('processor', 'publish_undefined_topics', True)
-processor.load_map(config.get('processor', 'mappings', []))
+# Router
+router = Router()
+router.default_topic_pattern = config.get('router', 'default_topic_pattern', '/raw/xbee/%s/%s')
+router.publish_undefined_topics = config.get('router', 'publish_undefined_topics', True)
+router.load(config.get('router', 'routes', []))
 
-# gateway
-gateway = Gateway()
-gateway.default_port_name = config.get('gateway', 'default_port_name', 'serial')
-gateway.processor = processor
-gateway.on_message = log
+# Processor
+processor = Processor()
+processor.load(config.get('processor', 'filters', []))
 
 # serial port
 serial = Serial(
@@ -43,8 +39,12 @@ serial = Serial(
     config.get('radio', 'baudrate', 9600)
 )
 
-# create API object, which spawns a new thread
-xbee = XBee(serial, callback=gateway.process)
+# xbee
+xbee = XBee()
+xbee.default_port_name = config.get('radio', 'default_port_name', 'serial')
+xbee.serial = serial
+xbee.on_message = log
+xbee.connect()
 
 # do other stuff in the main thread
 while True:
@@ -53,7 +53,4 @@ while True:
     except KeyboardInterrupt:
         break
 
-# halt() must be called before closing the serial
-# port in order to ensure proper thread shutdown
-xbee.halt()
-serial.close()
+xbee.disconnect()
