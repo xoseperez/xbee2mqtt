@@ -9,6 +9,7 @@ class Processor(object):
     filters = {}
 
     def load(self, filters):
+        self.filters = {}
         for topic, filter in filters.iteritems():
             self.filters[topic] = filter
 
