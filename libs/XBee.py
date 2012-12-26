@@ -56,7 +56,7 @@ class XBee(object):
         if (frame_id == 92):
             for port, value in packet['samples'].iteritems():
                 if port[:3] == 'dio':
-                    value = '1' if value else '0'
+                    value = 1 if value else 0
                 self.on_message(address, port, value)
 
     def on_message(self, address, port, value):
