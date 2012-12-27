@@ -57,9 +57,19 @@ class EnumFilter(Filter):
     name = 'enum'
     required = []
     def process(self, value):
-        for threshold, step in self.parameters.iteritems():
-            if value <= threshold:
-                return step
-        return step
+        for from_value, to_value in self.parameters.iteritems():
+            if value == from_value:
+                return to_value
+        return to_value
 FilterFactory.register(EnumFilter)
+
+class StepFilter(Filter):
+    name = 'step'
+    required = []
+    def process(self, value):
+        for threshold, to_value in self.parameters.iteritems():
+            if value <= threshold:
+                return to_value
+        return to_value
+FilterFactory.register(StepFilter)
 
