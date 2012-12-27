@@ -13,6 +13,8 @@ class Serial(object):
     length = 0
     index = 0
 
+    data = ''
+
     def _split_len(self, seq, length):
             return [seq[i:i+length] for i in range(0, len(seq), length)]
 
@@ -38,7 +40,7 @@ class Serial(object):
         return response
 
     def write(self, message):
-        print binascii.hexlify(message)
+        self.data += message
 
     def close(self):
         None

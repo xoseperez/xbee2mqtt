@@ -1,9 +1,14 @@
 #! /usr/bin/python
+# -*- coding: utf-8 -*-
 
-import os,sys
-parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0,parentdir)
+"""
+TestProcessor.py
 
+Xose Pérez, 2012
+xose.perez@gmail.com
+
+Tests the Processor, FilterFactory and all Filter subclasses.
+"""
 import unittest
 
 from libs.Processor import Processor
@@ -73,5 +78,4 @@ class TestProcessor(unittest.TestCase):
         self.assertEquals(0, processor.map('/test/not', 5))
 
 if __name__ == '__main__':
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestProcessor)
-    unittest.TextTestRunner(verbosity=2).run(suite)
+    unittest.main()

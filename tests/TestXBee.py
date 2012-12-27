@@ -1,8 +1,14 @@
 #! /usr/bin/python
+# -*- coding: utf-8 -*-
 
-import os,sys
-parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0,parentdir)
+"""
+TestXBee.py
+
+Xose Pérez, 2012
+xose.perez@gmail.com
+
+Tests the XBee wrapper
+"""
 
 import unittest
 import time
@@ -69,5 +75,4 @@ class TestXBee(unittest.TestCase):
         self.assertEquals(1, self.messages[1]['value'])
 
 if __name__ == '__main__':
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestXBee)
-    unittest.TextTestRunner(verbosity=2).run(suite)
+    unittest.main()
