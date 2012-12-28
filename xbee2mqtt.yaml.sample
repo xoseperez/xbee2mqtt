@@ -18,6 +18,7 @@ mqtt:
     qos: 0
     retain: True
     status_topic: /service/xbee2mqtt/status
+    set_will: False
 
 router:
     default_topic_pattern: /raw/xbee/{address}/{port}
