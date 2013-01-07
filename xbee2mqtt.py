@@ -24,10 +24,14 @@ from libs.XBee import XBee
 class Broker(Daemon):
 
     debug = True
+    duplicate_check_window = 5
+
     xbee = None
     mqtt = None
     router = None
     processor = None
+
+    _topics = {}
 
     def log(self, message):
         if self.debug:
@@ -69,6 +73,16 @@ class Broker(Daemon):
         self.log("[DEBUG] %s %s %s" % (address, port, value))
         topic = self.router.forward(address, port)
         if topic:
+
+            now = time.time()
+            if topic in self._topics.keys() \
+                and self._topics[topic]['time'] + self.duplicate_check_window > now \
+                and self._topics[topic]['value'] == value \
+                :
+                    self.log("[DEBUG] Duplicate removed")
+                    return
+            self._topics[topic] = {'time': now, 'value': value}
+
             value = self.processor.map(topic, value)
             self.log("[MESSAGE] %s %s" % (topic, value))
             self.mqtt.publish(topic, value)
@@ -82,6 +96,7 @@ class Broker(Daemon):
 
         self.log("[INFO] Starting " + __app__ + " v" + __version__)
         self.xbee.on_message = self.xbee_on_message
+        self.xbee.log = self.log
         self.mqtt_connect()
         self.xbee_connect()
 
@@ -97,6 +112,7 @@ if __name__ == "__main__":
     broker.stdout = config.get('daemon', 'stdout', '/dev/null')
     broker.stderr = config.get('daemon', 'stderr', '/dev/null')
     broker.debug = config.get('daemon', 'debug', False)
+    broker.duplicate_check_window = config.get('daemon', 'duplicate_check_window', 5)
 
     serial = Serial(
         config.get('radio', 'port', '/dev/ttyUSB0'),
