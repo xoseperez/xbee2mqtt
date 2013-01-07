@@ -35,7 +35,7 @@ class Broker(Daemon):
             sys.stdout.write("[%s] %s\n" % (timestamp, message))
             sys.stdout.flush()
 
-    def cleanup(self, signum, frame):
+    def cleanup(self):
         self.xbee.disconnect()
         self.mqtt_disconnect()
         self.log("[INFO] Exiting")
@@ -116,6 +116,7 @@ if __name__ == "__main__":
     mqtt.qos = config.get('mqtt', 'qos', 0)
     mqtt.retain = config.get('mqtt', 'retain', True)
     mqtt.status_topic = config.get('mqtt', 'status_topic', '/gateway/xbee/status')
+    mqtt.set_will = config.get('mqtt', 'set_will', False)
     broker.mqtt = mqtt
 
     router = Router()
