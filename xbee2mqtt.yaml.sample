@@ -3,6 +3,7 @@ daemon:
     stderr: /tmp/xbee2mqtt.err
     stdout: /tmp/xbee2mqtt.log
     debug: True
+    duplicate_check_window: 5
 
 radio:
     port: /dev/ttyUSB0
@@ -21,8 +22,8 @@ mqtt:
     set_will: False
 
 router:
-    default_topic_pattern: /raw/xbee/{address}/{port}
     publish_undefined_topics: False
+    default_topic_pattern: /raw/xbee/{address}/{port}
     routes:
         0013a200407b6d06:
             battery: /benavent/powermeter/sensor/battery
@@ -43,6 +44,6 @@ processor:
         /benavent/door/status:
             type: enum
             parameters:
-                0: 'Closed'
-                1: 'Open'
+                1: 'Closed'
+                0: 'Open'
 

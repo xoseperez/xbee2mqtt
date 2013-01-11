@@ -1,22 +1,55 @@
 #! /usr/bin/python
-# -*- utf-8 -*-
+# -*- coding: utf-8 -*-
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
+
+#   Xbee to MQTT gateway
+#   Copyright (C) 2012 by Xose Pérez
+#
+#   This program is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 3 of the License, or
+#   (at your option) any later version.
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+__author__ = "Xose Pérez"
+__contact__ = "xose.perez@gmail.com"
+__copyright__ = "Copyright (C) Xose Pérez"
+__license__ = 'GPL v3'
 
 import yaml
 
 class Config(object):
+    """
+    Simple YAML configuration parser
+    """
 
     config = None
 
     def __init__(self, filename):
+        """
+        Constructor, parses and stores the configuration
+        """
         handler = file(filename, 'r')
         self.config = yaml.load(handler)
         handler.close()
 
-    def get(self, section, key, default=None):
-        response = default
-        if self.config.has_key(section):
-            if self.config[section].has_key(key):
-                response = self.config[section][key]
-        return response
+    def get(self, section, key=None, default=None):
+        """
+        Retrieves a given section/key combination,
+        if not existent it return a default value
+        """
+        try:
+            if key is None:
+                return self.config[section]
+            else:
+                return self.config[section][key]
+        except:
+            return default
 

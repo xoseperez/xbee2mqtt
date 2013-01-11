@@ -1,20 +1,69 @@
-xbee2mqtt
-=========
+# xbee2mqtt
 
+This daemon will monitor a coordinator XBee connected to a serial port of the computer for incoming messages.
+The radio **must** be configured in API mode.
 
-Requirements
+## Requirements
 
 * Modified version of the python-xbee library. You can get the forked code here:
+<pre>
 hg clone https://code.google.com/r/xoseperez-python-xbee python-xbee
 cd python-xbee
 sudo python setup.py install
+</pre>
 
 * python-yaml
-sudo apt-get install python-yaml
+<pre>sudo apt-get install python-yaml</pre>
 
 * python-mosquitto
-sudo apt-get install python-mosquitto
+<pre>sudo apt-get install python-mosquitto</pre>
 
 * python-serial
-sudo apt-get install python-serial
+<pre>sudo apt-get install python-serial</pre>
+
+
+## Install
+
+Just clone or extract the code in some folder. I'm not providing an setup.pu file yet.
+
+## Configuration
+
+Rename or copy the xbee2mqtt.yaml.sample to xbee2mqtt.yaml and edit it. The configuration is pretty straight forward:
+
+### daemon
+
+The only not so obvious parameter is the **duplicate_check_window**, it lets you define a time window in seconds where messages for the same topic and with the same value will be ignored as duplicates.
+
+### radio
+
+Configuration of the port where the XBee is attached to.
+All messages are defined by the originating radio address (an 8 byte value) and a port or pin.
+The **default_port_name** parameter lets you define what port name to use when the message was originally sent through the UART interface of the originating radio 
+
+### mqtt
+
+These are standard Mosquitto parameters. The status topic is the topic to post messages when the daemon starts or stops.
+
+### router
+
+The router is the responsible for mapping Xbee messages to MQTT topics.
+
+The **routes** dictionary defines the map tuples [address, port] to topics. The port could be the radio pin (dio12, adc1, adc7,...) or a string for messages sent through the UART of the sending radio. 
+To send a custom message just send "port:value\n" through the UART interface of the radio, if no port is specified the **default_port_name** value will be used.
+If **publish_undefined_topic** is set to False only messages defined in the routes part will be published to mosquitto. 
+If **publish_undefined_topic** is True, if the route is not defined it will be mapped to a topic defined by the **default_topic_pattern**.
+
+
+### processor
+
+The processor is responsible for pre-processing the values before publishing them. There are several filters defined in libs/Filters.py
+
+
+## Running it
+
+The util stays resident as a daemon. You can start it, stop it or restart it (to reload the configuration) by using:
+
+<pre>python xbee2mqtt.py start|stop|restart</pre>
+
+
 

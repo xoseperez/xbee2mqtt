@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 
+# This code was originally poster by Sander Merechal in this post:
+# http://www.jejik.com/articles/2007/02/a_simple_unix_linux_daemon_in_python/
+# The original license is unknown but the code was released free to use.
+# The code here might be slightly different from Sander's original one.
+
 import sys, os, time, atexit
 from signal import SIGTERM
 
