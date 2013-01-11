@@ -85,7 +85,7 @@ class LinearFilter(Filter):
     name = 'linear'
     required = ['slope', 'offset']
     def process(self, value):
-        return self.parameters['slope'] * value + self.parameters['offset']
+        return int(self.parameters['slope'] * value + self.parameters['offset'])
 FilterFactory.register(LinearFilter)
 
 class BooleanFilter(Filter):

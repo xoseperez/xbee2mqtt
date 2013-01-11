@@ -1,8 +1,10 @@
 #! /usr/bin/python
+# -*- coding: utf-8 -*-
 
-import os,sys
-parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0,parentdir)
+__author__ = "Xose Pérez"
+__contact__ = "xose.perez@gmail.com"
+__copyright__ = "Copyright (C) Xose Pérez"
+__license__ = 'GPL v3'
 
 import unittest
 
@@ -34,5 +36,4 @@ class TestRouter(unittest.TestCase):
         self.assertEquals('/raw/bbb/dio12', router.forward('bbb', 'dio12'))
 
 if __name__ == '__main__':
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestRouter)
-    unittest.TextTestRunner(verbosity=2).run(suite)
+    unittest.main()
