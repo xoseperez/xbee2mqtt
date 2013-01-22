@@ -23,6 +23,8 @@ __contact__ = "xose.perez@gmail.com"
 __copyright__ = "Copyright (C) Xose Pérez"
 __license__ = 'GPL v3'
 
+from datetime import datetime
+
 class FilterFactory(object):
     """
     Filter factory, returns the appropriate filter given the type
@@ -133,4 +135,21 @@ class StepFilter(Filter):
                 return to_value
         return to_value
 FilterFactory.register(StepFilter)
+
+class FormatFilter(Filter):
+    """
+    String format filter
+    """
+    name = 'format'
+    required = ['format']
+    def process(self, value):
+        now = datetime.now()
+        value = self.parameters['format'].format(
+            value=value,
+            date=now.strftime('%Y-%m-%d'),
+            time=now.strftime('%H:%M:%S'),
+            datetime=now.strftime('%Y-%m-%d %H:%M:%S')
+        )
+        return value
+FilterFactory.register(FormatFilter)
 

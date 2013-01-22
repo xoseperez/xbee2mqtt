@@ -68,5 +68,11 @@ class TestProcessor(unittest.TestCase):
         self.assertEquals(0, processor.map('/test/not', -1))
         self.assertEquals(0, processor.map('/test/not', 5))
 
+    def test_format(self):
+        processor = Processor({
+            '/test/format1': { 'type': 'format', 'parameters':{'format': 'Current power consumption: {value}W'} }
+        })
+        self.assertEquals("Current power consumption: 200W", processor.map('/test/format1', 200))
+
 if __name__ == '__main__':
     unittest.main()
