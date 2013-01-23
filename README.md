@@ -30,29 +30,25 @@ Just clone or extract the code in some folder. I'm not providing an setup.pu fil
 
 Rename or copy the xbee2mqtt.yaml.sample to xbee2mqtt.yaml and edit it. The configuration is pretty straight forward:
 
-### daemon
+### general
 
-The only not so obvious parameter is the **duplicate_check_window**, it lets you define a time window in seconds where messages for the same topic and with the same value will be ignored as duplicates.
+**duplicate_check_window** lets you define a time window in seconds where messages for the same topic and with the same value will be ignored as duplicates.
+**default_topic_pattern** lets you define a default topic for every message. It accepts two placeholders: {address} for the radio address and {port}. 
+The port can be the radio pin (dio12, adc1, adc7,...) or a string for messages sent through the UART of the sending radio. 
+**routes** dictionary defines the topics map. 
+Set **publish_undefined_topic** False to filter out topics not defined in the routes dictionary. 
+If it's True and the route is not defined it will be mapped to a topic defined by the **default_topic_pattern**.
 
 ### radio
 
 Configuration of the port where the XBee is attached to.
 All messages are defined by the originating radio address (an 8 byte value) and a port or pin.
 The **default_port_name** parameter lets you define what port name to use when the message was originally sent through the UART interface of the originating radio 
+To send a custom message just send "port:value\n" through the UART interface of the radio, if no port is specified the **default_port_name** value will be used.
 
 ### mqtt
 
 These are standard Mosquitto parameters. The status topic is the topic to post messages when the daemon starts or stops.
-
-### router
-
-The router is the responsible for mapping Xbee messages to MQTT topics.
-
-The **routes** dictionary defines the map tuples [address, port] to topics. The port could be the radio pin (dio12, adc1, adc7,...) or a string for messages sent through the UART of the sending radio. 
-To send a custom message just send "port:value\n" through the UART interface of the radio, if no port is specified the **default_port_name** value will be used.
-If **publish_undefined_topic** is set to False only messages defined in the routes part will be published to mosquitto. 
-If **publish_undefined_topic** is True, if the route is not defined it will be mapped to a topic defined by the **default_topic_pattern**.
-
 
 ### processor
 
