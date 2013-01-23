@@ -38,7 +38,7 @@ class Processor(object):
         """
         self._filters = filters
 
-    def map(self, topic, value):
+    def process(self, topic, value):
         """
         Gets the filter strategy for the given topic,
         instantiates a filter for that strategy using the FilterFactory and

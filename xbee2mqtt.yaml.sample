@@ -1,9 +1,19 @@
-daemon:
+general:
+
     pidfile: /tmp/xbee2mqtt.pid
     stderr: /tmp/xbee2mqtt.err
     stdout: /tmp/xbee2mqtt.log
+
     debug: True
     duplicate_check_window: 5
+    publish_undefined_topics: False
+    default_topic_pattern: /raw/xbee/{address}/{port}
+
+    routes:
+        /raw/xbee/0013a200407b6d06/battery: /benavent/powermeter/sensor/battery
+        /raw/xbee/0013a200407b6d06/power: /benavent/general/power
+        /raw/xbee/0013a200406bfd09/adc7: /benavent/door/sensor/battery
+        /raw/xbee/0013a200406bfd09/dio12: /benavent/door/status
 
 radio:
     port: /dev/ttyUSB0
@@ -20,18 +30,6 @@ mqtt:
     retain: True
     status_topic: /service/xbee2mqtt/status
     set_will: False
-
-router:
-    publish_undefined_topics: False
-    default_topic_pattern: /raw/xbee/{address}/{port}
-    routes:
-        0013a200407b6d06:
-            battery: /benavent/powermeter/sensor/battery
-            power: /benavent/general/power
-            energy: /benavent/general/energy
-        0013a200406bfd09:
-            adc7: /benavent/door/sensor/battery
-            dio12: /benavent/door/status
 
 processor:
     filters:

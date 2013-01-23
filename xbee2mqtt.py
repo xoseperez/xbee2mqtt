@@ -32,7 +32,6 @@ from datetime import datetime
 #from tests.SerialMock import Serial
 from serial import Serial
 from libs.Daemon import Daemon
-from libs.Router import Router
 from libs.Processor import Processor
 from libs.Config import Config
 from libs.Mosquitto import Mosquitto
@@ -49,7 +48,6 @@ class Xbee2MQTT(Daemon):
 
     xbee = None
     mqtt = None
-    router = None
     processor = None
 
     _topics = {}
@@ -117,7 +115,8 @@ class Xbee2MQTT(Daemon):
         Message from the radio coordinator
         """
         self.log("[DEBUG] %s %s %s" % (address, port, value))
-        topic = self.router.forward(address, port)
+        topic = self.default_topic_pattern.format(address=address, port=port)
+        topic = self.routes.get(topic, topic if self.publish_undefined_topics else False)
         if topic:
 
             now = time.time()
@@ -129,7 +128,7 @@ class Xbee2MQTT(Daemon):
                     return
             self._topics[topic] = {'time': now, 'value': value}
 
-            value = self.processor.map(topic, value)
+            value = self.processor.process(topic, value)
             self.log("[MESSAGE] %s %s" % (topic, value))
             self.mqtt.publish(topic, value)
 
@@ -159,11 +158,14 @@ if __name__ == "__main__":
 
     config = Config('xbee2mqtt.yaml')
 
-    manager = Xbee2MQTT(config.get('daemon', 'pidfile', '/tmp/xbee2mqtt.pid'))
-    manager.stdout = config.get('daemon', 'stdout', '/dev/null')
-    manager.stderr = config.get('daemon', 'stderr', '/dev/null')
-    manager.debug = config.get('daemon', 'debug', False)
-    manager.duplicate_check_window = config.get('daemon', 'duplicate_check_window', 5)
+    manager = Xbee2MQTT(config.get('general', 'pidfile', '/tmp/xbee2mqtt.pid'))
+    manager.stdout = config.get('general', 'stdout', '/dev/null')
+    manager.stderr = config.get('general', 'stderr', '/dev/null')
+    manager.debug = config.get('general', 'debug', False)
+    manager.duplicate_check_window = config.get('general', 'duplicate_check_window', 5)
+    manager.default_topic_pattern = config.get('manager', 'default_topic_pattern', '/raw/xbee/%s/%s')
+    manager.publish_undefined_topics = config.get('manager', 'publish_undefined_topics', True)
+    manager.routes = config.get('manager', 'routes', [])
 
     serial = Serial(
         config.get('radio', 'port', '/dev/ttyUSB0'),
@@ -185,12 +187,6 @@ if __name__ == "__main__":
     mqtt.status_topic = config.get('mqtt', 'status_topic', '/gateway/xbee/status')
     mqtt.set_will = config.get('mqtt', 'set_will', False)
     manager.mqtt = mqtt
-
-    router = Router()
-    router.default_topic_pattern = config.get('router', 'default_topic_pattern', '/raw/xbee/%s/%s')
-    router.publish_undefined_topics = config.get('router', 'publish_undefined_topics', True)
-    router.load(config.get('router', 'routes', []))
-    manager.router = router
 
     processor = Processor(config.get('processor', 'filters', []))
     manager.processor = processor
