@@ -74,5 +74,11 @@ class TestProcessor(unittest.TestCase):
         })
         self.assertEquals("Current power consumption: 200W", processor.process('/test/format1', 200))
 
+    def test_regexp(self):
+        processor = Processor({
+            '/test/regexp1': { 'type': 'regexp', 'parameters':{'pattern': '(.*): (.*)', 'replacement': '\\1|\\2'} }
+        })
+        self.assertEquals("username|text", processor.process('/test/regexp1', 'username: text'))
+
 if __name__ == '__main__':
     unittest.main()

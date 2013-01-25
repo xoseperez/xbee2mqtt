@@ -23,6 +23,7 @@ __contact__ = "xose.perez@gmail.com"
 __copyright__ = "Copyright (C) Xose Pérez"
 __license__ = 'GPL v3'
 
+import re
 from datetime import datetime
 
 class FilterFactory(object):
@@ -152,4 +153,15 @@ class FormatFilter(Filter):
         )
         return value
 FilterFactory.register(FormatFilter)
+
+class RegExpFilter(Filter):
+    """
+    Regexp replace filter
+    """
+    name = 'regexp'
+    required = ['pattern', 'replacement']
+    def process(self, value):
+        pattern = re.compile(self.parameters['pattern'])
+        return pattern.sub(self.parameters['replacement'], value)
+FilterFactory.register(RegExpFilter)
 
