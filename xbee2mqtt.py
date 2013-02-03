@@ -146,12 +146,11 @@ class Xbee2MQTT(Daemon):
         """
         self.log("[INFO] Starting " + __app__ + " v" + __version__)
         self.xbee.on_message = self.xbee_on_message
-        self.xbee.log = self.log
+        #self.xbee.log = self.log
         self.mqtt_connect()
         self.xbee_connect()
 
         while True:
-            time.sleep(1)
             self.mqtt.loop()
 
 if __name__ == "__main__":
@@ -163,9 +162,9 @@ if __name__ == "__main__":
     manager.stderr = config.get('general', 'stderr', '/dev/null')
     manager.debug = config.get('general', 'debug', False)
     manager.duplicate_check_window = config.get('general', 'duplicate_check_window', 5)
-    manager.default_topic_pattern = config.get('manager', 'default_topic_pattern', '/raw/xbee/%s/%s')
-    manager.publish_undefined_topics = config.get('manager', 'publish_undefined_topics', True)
-    manager.routes = config.get('manager', 'routes', [])
+    manager.default_topic_pattern = config.get('general', 'default_topic_pattern', '/raw/xbee/{address}/{port}')
+    manager.publish_undefined_topics = config.get('general', 'publish_undefined_topics', True)
+    manager.routes = config.get('general', 'routes', {})
 
     serial = Serial(
         config.get('radio', 'port', '/dev/ttyUSB0'),
