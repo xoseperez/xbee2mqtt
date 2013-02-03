@@ -23,6 +23,7 @@ __contact__ = "xose.perez@gmail.com"
 __copyright__ = "Copyright (C) Xose Pérez"
 __license__ = 'GPL v3'
 
+import binascii
 from xbee import XBee as _XBee
 
 class XBee(object):
@@ -107,7 +108,26 @@ class XBee(object):
     def on_message(self, address, port, value):
         """
         Hook for outgoing messages.
-        For future use with Xbee attached actuators.
         """
         None
 
+    def send_message(self, address, port, value, permanent = True):
+        """
+        Sends a message to a remote radio
+        Currently, this only supports setting a digital output pin LOW (4) or HIGH (5)
+        """
+        try:
+
+            if port[:3] == 'dio':
+                address = binascii.unhexlify(address)
+                number = int(port[3:])
+                command = 'P%d' % (number - 10) if number>9 else 'D%d' % number
+                value = binascii.unhexlify('0' + str(int(value) + 4))
+                self.xbee.remote_at(dest_addr_long = address, command = command, parameter = value)
+                self.xbee.remote_at(dest_addr_long = address, command = 'WR' if permanent else 'AC')
+                return True
+
+        except:
+            pass
+
+        return False

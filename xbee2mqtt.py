@@ -3,7 +3,7 @@
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
 
 #   Xbee to MQTT gateway
-#   Copyright (C) 2012 by Xose Pérez
+#   Copyright (C) 2012-2013 by Xose Pérez
 #
 #   This program is free software: you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -19,14 +19,15 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 __app__ = "Xbee to MQTT gateway"
-__version__ = "0.2.1"
+__version__ = "0.3"
 __author__ = "Xose Pérez"
 __contact__ = "xose.perez@gmail.com"
-__copyright__ = "Copyright (C) Xose Pérez"
+__copyright__ = "Copyright (C) 2012-2013 Xose Pérez"
 __license__ = 'GPL v3'
 
 import sys
 import time
+import ctypes
 from datetime import datetime
 
 #from tests.SerialMock import Serial
@@ -50,7 +51,17 @@ class Xbee2MQTT(Daemon):
     mqtt = None
     processor = None
 
-    _topics = {}
+    _routes = {}
+    _actions = {}
+
+    def load(self, routes):
+        """
+        Read configuration and store bidirectional dicts
+        """
+        for address, ports in routes.iteritems():
+            for port, topic in ports.iteritems():
+                self._routes[(address, port)] = topic
+                self._actions['%s/set' % topic] = (address, port)
 
     def log(self, message):
         """
@@ -67,7 +78,7 @@ class Xbee2MQTT(Daemon):
         Clean up connections and unbind ports
         """
         self.xbee.disconnect()
-        self.mqtt_disconnect()
+        self.mqtt.disconnect()
         self.log("[INFO] Exiting")
         sys.exit()
 
@@ -79,12 +90,7 @@ class Xbee2MQTT(Daemon):
         self.mqtt.on_connect = self.mqtt_on_connect
         self.mqtt.on_disconnect = self.mqtt_on_disconnect
         self.mqtt.on_message = self.mqtt_on_message
-
-    def mqtt_disconnect(self):
-        """
-        Disconnect from MQTT broker
-        """
-        self.mqtt.disconnect()
+        self.mqtt.on_subscribe = self.mqtt_on_subscribe
 
     def mqtt_on_connect(self, obj, result_code):
         """
@@ -93,6 +99,9 @@ class Xbee2MQTT(Daemon):
         if result_code == 0:
             self.log("[INFO] Connected to Mosquitto manager")
             self.mqtt.send_connected()
+            for topic in self._actions:
+                rc, mid = self.mqtt.subscribe(topic, 0)
+                self.log("[INFO] Subscription to %s sent with MID %d" % (topic, mid))
         else:
             self.stop()
 
@@ -104,19 +113,36 @@ class Xbee2MQTT(Daemon):
             time.sleep(5)
             self.mqtt_connect()
 
-    def mqtt_on_message(self, msg):
+    def mqtt_on_subscribe(self, obj, mid, qos_list):
+        """
+        Callback when succeeded subscription
+        """
+        self.log("[INFO] Subscription for MID %s confirmed." % mid)
+
+    def mqtt_on_message(self, obj, msg):
         """
         Message received from a subscribed topic
         """
-        None
+        data = self._actions.get(msg.topic, None)
+        if data:
+            address, port = data
+            try:
+                message = ctypes.string_at(msg.payload, msg.payloadlen)
+            except:
+                message = msg.payload
+
+            self.log("[DEBUG] Setting radio %s port %s to %s" % (address, port, message))
+            self.xbee.send_message(address, port, message)
 
     def xbee_on_message(self, address, port, value):
         """
         Message from the radio coordinator
         """
         self.log("[DEBUG] %s %s %s" % (address, port, value))
-        topic = self.default_topic_pattern.format(address=address, port=port)
-        topic = self.routes.get(topic, topic if self.publish_undefined_topics else False)
+        topic = self._routes.get(
+            (address, port),
+            self.default_topic_pattern.format(address=address, port=port) if self.publish_undefined_topics else False
+        )
         if topic:
 
             now = time.time()
@@ -137,15 +163,15 @@ class Xbee2MQTT(Daemon):
         Initiate connection to the radio coordinator via serial port
         """
         self.log("[INFO] Connecting to Xbee")
-        if not xbee.connect():
+        if not self.xbee.connect():
             self.stop()
+        self.xbee.on_message = self.xbee_on_message
 
     def run(self):
         """
         Entry point, initiates components and loops forever...
         """
         self.log("[INFO] Starting " + __app__ + " v" + __version__)
-        self.xbee.on_message = self.xbee_on_message
         #self.xbee.log = self.log
         self.mqtt_connect()
         self.xbee_connect()
@@ -164,7 +190,7 @@ if __name__ == "__main__":
     manager.duplicate_check_window = config.get('general', 'duplicate_check_window', 5)
     manager.default_topic_pattern = config.get('general', 'default_topic_pattern', '/raw/xbee/{address}/{port}')
     manager.publish_undefined_topics = config.get('general', 'publish_undefined_topics', True)
-    manager.routes = config.get('general', 'routes', {})
+    manager.load(config.get('general', 'routes', {}))
 
     serial = Serial(
         config.get('radio', 'port', '/dev/ttyUSB0'),

@@ -10,10 +10,15 @@ general:
     default_topic_pattern: /raw/xbee/{address}/{port}
 
     routes:
-        /raw/xbee/0013a200407b6d06/battery: /benavent/powermeter/sensor/battery
-        /raw/xbee/0013a200407b6d06/power: /benavent/general/power
-        /raw/xbee/0013a200406bfd09/adc7: /benavent/door/sensor/battery
-        /raw/xbee/0013a200406bfd09/dio12: /benavent/door/status
+        0013a200407b6d06:
+            battery: /home/powermeter/sensor/battery
+            power: /home/general/power
+        0013a200406bfd09:
+            adc7: /home/door/sensor/battery
+            dio12: /home/door/status
+        0013a2004092d70b:
+            dio10: /test/dio10
+            dio11: /test/dio11
 
 radio:
     port: /dev/ttyUSB0
