@@ -1,6 +1,7 @@
 # xbee2mqtt
 
 This daemon will monitor a coordinator XBee connected to a serial port of the computer for incoming messages.
+From version 0.3 it also support setting digital pins LOW or HIGH on remote radios.
 The radio **must** be configured in API mode.
 
 ## Requirements
@@ -24,7 +25,7 @@ sudo python setup.py install
 
 ## Install
 
-Just clone or extract the code in some folder. I'm not providing an setup.pu file yet.
+Just clone or extract the code in some folder. I'm not providing an setup.py file yet.
 
 ## Configuration
 
@@ -38,6 +39,8 @@ The port can be the radio pin (dio12, adc1, adc7,...) or a string for messages s
 **routes** dictionary defines the topics map. 
 Set **publish_undefined_topic** False to filter out topics not defined in the routes dictionary. 
 If it's True and the route is not defined it will be mapped to a topic defined by the **default_topic_pattern**.
+For every defined route a subscription to the same route plus "/set" will be done. 
+If the route maps to a digital port in the remote radio you can change its status to OUTPUT LOW ot OUTPUT HIGH by publishing a 0 or a 1 to this topic.
 
 ### radio
 
