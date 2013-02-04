@@ -19,7 +19,7 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 __app__ = "Xbee to MQTT gateway"
-__version__ = "0.3"
+__version__ = "0.3.1"
 __author__ = "Xose Pérez"
 __contact__ = "xose.perez@gmail.com"
 __copyright__ = "Copyright (C) 2012-2013 Xose Pérez"
@@ -86,18 +86,18 @@ class Xbee2MQTT(Daemon):
         """
         Initiate connection to MQTT broker and bind callback methods
         """
-        self.mqtt.connect()
         self.mqtt.on_connect = self.mqtt_on_connect
         self.mqtt.on_disconnect = self.mqtt_on_disconnect
         self.mqtt.on_message = self.mqtt_on_message
         self.mqtt.on_subscribe = self.mqtt_on_subscribe
+        self.mqtt.connect()
 
     def mqtt_on_connect(self, obj, result_code):
         """
         Callback when connection to the MQTT broker has succedeed or failed
         """
         if result_code == 0:
-            self.log("[INFO] Connected to Mosquitto manager")
+            self.log("[INFO] Connected to MQTT broker")
             self.mqtt.send_connected()
             for topic in self._actions:
                 rc, mid = self.mqtt.subscribe(topic, 0)
@@ -110,7 +110,7 @@ class Xbee2MQTT(Daemon):
         Callback when disconnecting from the MQTT broker
         """
         if result_code != 0:
-            time.sleep(5)
+            time.sleep(3)
             self.mqtt_connect()
 
     def mqtt_on_subscribe(self, obj, mid, qos_list):
@@ -132,7 +132,11 @@ class Xbee2MQTT(Daemon):
                 message = msg.payload
 
             self.log("[DEBUG] Setting radio %s port %s to %s" % (address, port, message))
-            self.xbee.send_message(address, port, message)
+            try:
+	            self.xbee.send_message(address, port, message)
+            except Exception as e:
+                self.log("[ERROR] %s" % e)
+
 
     def xbee_on_message(self, address, port, value):
         """
