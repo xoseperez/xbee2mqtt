@@ -12,6 +12,15 @@ from libs.Processor import Processor
 
 class TestProcessor(unittest.TestCase):
 
+    def test_chained(self):
+        processor = Processor({
+            '/test/chained': [
+                { 'type': 'linear', 'parameters':{ 'slope': 0.5, 'offset': 1}},
+                { 'type': 'round', 'parameters':{ 'decimals': 0}},
+            ],
+        })
+        self.assertEquals(7, processor.process('/test/chained', '11'))
+
     def test_unknown(self):
         processor = Processor({
             '/test/linear': { 'type': 'linear', 'parameters':{ 'slope': 2, 'offset': 1}},
@@ -19,6 +28,12 @@ class TestProcessor(unittest.TestCase):
         self.assertEquals(21, processor.process('/test/linear', '10'))
         self.assertEquals('0', processor.process('/test/linear/1', '0'))
         self.assertEquals('10', processor.process('/test/linear/2', '10'))
+
+    def test_round(self):
+        processor = Processor({
+            '/test/round/1': { 'type': 'round', 'parameters':{ 'decimals': 2}},
+        })
+        self.assertEquals(997.54, processor.process('/test/round/1', '997.5412'))
 
     def test_linear(self):
         processor = Processor({
@@ -33,7 +48,7 @@ class TestProcessor(unittest.TestCase):
         self.assertEquals(1, processor.process('/test/linear/2', '4'))
         self.assertEquals(0, processor.process('/test/linear/3', '0'))
         self.assertEquals(-6, processor.process('/test/linear/3', '6'))
-        self.assertEquals(998, processor.process('/test/linear/4', '99754.12'))
+        self.assertEquals(997.5412, processor.process('/test/linear/4', '99754.12'))
 
     def test_enum(self):
         processor = Processor({

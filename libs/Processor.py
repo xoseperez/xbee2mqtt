@@ -47,11 +47,14 @@ class Processor(object):
 
         try:
             config = self._filters[topic]
-            filter = FilterFactory(config['type'])
-            if (filter):
-                filter.configure(config.get('parameters', None))
-                if filter.validate():
-                    value = filter.process(value)
+            if not isinstance(config, list):
+                config = [config]
+            for element in config:
+                filter = FilterFactory(element.get('type', None))
+                if (filter):
+                    filter.configure(element.get('parameters', None))
+                    if filter.validate():
+                        value = filter.process(value)
 
         except:
             pass

@@ -88,8 +88,21 @@ class LinearFilter(Filter):
     name = 'linear'
     required = ['slope', 'offset']
     def process(self, value):
-        return round(self.parameters['slope'] * float(value) + self.parameters['offset'],0)
+        return self.parameters['slope'] * float(value) + self.parameters['offset']
 FilterFactory.register(LinearFilter)
+
+class RoundFilter(Filter):
+    """
+    Rounds the number: y=round(x)
+    """
+    name = 'round'
+    required = ['decimals']
+    def process(self, value):
+        value = round(float(value), self.parameters['decimals'])
+        if self.parameters['decimals'] == 0:
+            value = int(value)
+        return value
+FilterFactory.register(RoundFilter)
 
 class BooleanFilter(Filter):
     """
