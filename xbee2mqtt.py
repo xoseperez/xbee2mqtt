@@ -186,7 +186,7 @@ class Xbee2MQTT(Daemon):
 
 if __name__ == "__main__":
 
-    config = Config('xbee2mqtt.yaml')
+    config = Config('config/xbee2mqtt.yaml')
 
     manager = Xbee2MQTT(config.get('general', 'pidfile', '/tmp/xbee2mqtt.pid'))
     manager.stdout = config.get('general', 'stdout', '/dev/null')
