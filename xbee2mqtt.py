@@ -25,6 +25,7 @@ __contact__ = "xose.perez@gmail.com"
 __copyright__ = "Copyright (C) 2012-2013 Xose Pérez"
 __license__ = 'GPL v3'
 
+import os
 import sys
 import time
 import logging
@@ -50,6 +51,7 @@ class Xbee2MQTT(Daemon):
     xbee = None
     mqtt = None
     processor = None
+    config_file = None
 
     _routes = {}
     _actions = {}
@@ -59,6 +61,8 @@ class Xbee2MQTT(Daemon):
         """
         Read configuration and store bidirectional dicts
         """
+        self._routes = {}
+        self._actions = {}
         for address, ports in routes.iteritems():
             for port, topic in ports.iteritems():
                 self._routes[(address, port)] = topic
@@ -118,6 +122,12 @@ class Xbee2MQTT(Daemon):
             self.log(logging.INFO, "Sending message to MQTT broker: %s %s" % (topic, value))
             self.mqtt.publish(topic, value)
 
+    def do_reload(self):
+        self.log(logging.INFO, "Reloading")
+        config = Config(config_file)
+        self.load(config.get('general', 'routes', {}))
+        self.mqtt.subscribe(self._actions.keys())
+
     def run(self):
         """
         Entry point, initiates components and loops forever...
@@ -134,11 +144,18 @@ class Xbee2MQTT(Daemon):
             self.stop()
 
         while True:
-            self.mqtt.loop()
+            try:
+                self.mqtt.loop()
+            except Exception as e:
+                self.log(logging.ERROR, "Error while looping MQTT (%s)" % e)
 
 if __name__ == "__main__":
 
-    config = Config('config/xbee2mqtt.yaml')
+    def resolve_path(path):
+        return path if path[0] == '/' else os.path.join(os.path.dirname(os.path.realpath(__file__)), path)
+
+    config_file = resolve_path('config/xbee2mqtt.yaml');
+    config = Config(config_file)
 
     handler = logging.StreamHandler()
     formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
@@ -167,9 +184,8 @@ if __name__ == "__main__":
 
     processor = Processor(config.get('processor', 'filters', []))
 
-    xbee2mqtt = Xbee2MQTT(config.get('general', 'pidfile', '/tmp/xbee2mqtt.pid'))
-    xbee2mqtt.stdout = config.get('general', 'stdout', '/dev/null')
-    xbee2mqtt.stderr = config.get('general', 'stderr', '/dev/null')
+    xbee2mqtt = Xbee2MQTT(resolve_path(config.get('general', 'pidfile', '/tmp/xbee2mqtt.pid')))
+    xbee2mqtt.stdout = xbee2mqtt.stderr = resolve_path(config.get('general', 'stdout', '/dev/null'))
     xbee2mqtt.debug = config.get('general', 'debug', False)
     xbee2mqtt.duplicate_check_window = config.get('general', 'duplicate_check_window', 5)
     xbee2mqtt.default_topic_pattern = config.get('general', 'default_topic_pattern', '/raw/xbee/{address}/{port}')
@@ -179,6 +195,7 @@ if __name__ == "__main__":
     xbee2mqtt.mqtt = mqtt
     xbee2mqtt.xbee = xbee
     xbee2mqtt.processor = processor
+    xbee2mqtt.config_file = config_file
 
     if len(sys.argv) == 2:
         if 'start' == sys.argv[1]:
@@ -187,6 +204,8 @@ if __name__ == "__main__":
             xbee2mqtt.stop()
         elif 'restart' == sys.argv[1]:
             xbee2mqtt.restart()
+        elif 'reload' == sys.argv[1]:
+            xbee2mqtt.reload()
         else:
             print "Unknown command"
             sys.exit(2)

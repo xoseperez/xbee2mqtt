@@ -6,7 +6,7 @@
 # The code here might be slightly different from Sander's original one.
 
 import sys, os, time, atexit
-from signal import SIGTERM
+import signal
 
 class Daemon:
     """
@@ -65,6 +65,9 @@ class Daemon:
         pid = str(os.getpid())
         file(self.pidfile,'w+').write("%s\n" % pid)
 
+        # attach signals hooks
+        signal.signal( signal.SIGUSR1, self.reload_handler )
+
     def cleanup(self):
         os.remove(self.pidfile)
 
@@ -109,7 +112,7 @@ class Daemon:
         # Try killing the daemon process
         try:
             while 1:
-                os.kill(pid, SIGTERM)
+                os.kill(pid, signal.SIGTERM)
                 time.sleep(0.1)
         except OSError, err:
             err = str(err)
@@ -132,3 +135,45 @@ class Daemon:
         You should override this method when you subclass Daemon. It will be called after the process has been
         daemonized by start() or restart().
         """
+
+    def reload(self):
+        """
+        Send USR1 signal to reload config
+        """
+        # Get the pid from the pidfile
+        try:
+            pf = file(self.pidfile,'r')
+            pid = int(pf.read().strip())
+            pf.close()
+        except IOError:
+            pid = None
+
+        if not pid:
+            message = "pidfile %s does not exist. Daemon not running?\n"
+            sys.stderr.write(message % self.pidfile)
+            return
+
+        # Send signal
+        try:
+            os.kill(pid, signal.SIGUSR1)
+        except OSError, err:
+            err = str(err)
+            if err.find("No such process") > 0:
+                if os.path.exists(self.pidfile):
+                    os.remove(self.pidfile)
+            else:
+                print str(err)
+                sys.exit(1)
+
+    def reload_handler(self, signum, frame):
+        """
+        Reload signal handler
+        """
+        self.do_reload();
+
+    def do_reload(self):
+        """
+        You should override this method when you subclass Daemon.
+        It will be called when the process receives a USR1 signal.
+        """
+

@@ -4,32 +4,45 @@ This daemon will monitor a coordinator XBee connected to a serial port of the co
 From version 0.3 it also support setting digital pins LOW or HIGH on remote radios.
 The radio **must** be configured in API mode.
 
+
 ## Requirements
+
+All requirements will be installed in the virtual environment by running
+
+<pre>./do setup</pre>
+
+from the project root. If you don't want to use the virtualenv, you will have to install
+the requierements manually:
 
 * Modified version of the python-xbee library. You can get the forked code here:
 <pre>
 hg clone https://code.google.com/r/xoseperez-python-xbee python-xbee
 cd python-xbee
-sudo python setup.py install
+python setup.py install
 </pre>
 
 * python-yaml
-<pre>sudo apt-get install python-yaml</pre>
+<pre>apt-get install python-yaml</pre>
 
 * python-mosquitto
-<pre>sudo apt-get install python-mosquitto</pre>
+<pre>apt-get install python-mosquitto</pre>
 
 * python-serial
-<pre>sudo apt-get install python-serial</pre>
+<pre>apt-get install python-serial</pre>
 
 
 ## Install
 
 Just clone or extract the code in some folder. I'm not providing an setup.py file yet.
+But you can install a local virtual environment using 
+
+<pre>./do setup</pre>
+
 
 ## Configuration
 
 Rename or copy the xbee2mqtt.yaml.sample to xbee2mqtt.yaml and edit it. The configuration is pretty straight forward:
+
 
 ### general
 
@@ -42,6 +55,7 @@ If it's True and the route is not defined it will be mapped to a topic defined b
 For every defined route a subscription to the same route plus "/set" will be done. 
 If the route maps to a digital port in the remote radio you can change its status to OUTPUT LOW ot OUTPUT HIGH by publishing a 0 or a 1 to this topic.
 
+
 ### radio
 
 Configuration of the port where the XBee is attached to.
@@ -49,9 +63,11 @@ All messages are defined by the originating radio address (an 8 byte value) and 
 The **default_port_name** parameter lets you define what port name to use when the message was originally sent through the UART interface of the originating radio 
 To send a custom message just send "port:value\n" through the UART interface of the radio, if no port is specified the **default_port_name** value will be used.
 
+
 ### mqtt
 
 These are standard Mosquitto parameters. The status topic is the topic to post messages when the daemon starts or stops.
+
 
 ### processor
 
@@ -63,6 +79,11 @@ The processor is responsible for pre-processing the values before publishing the
 The util stays resident as a daemon. You can start it, stop it or restart it (to reload the configuration) by using:
 
 <pre>python xbee2mqtt.py start|stop|restart</pre>
+
+or easier (it will login the virtual enviroment and execute the previous command):
+
+<pre>./do start</pre>
+
 
 
 
