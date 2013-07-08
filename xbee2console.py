@@ -28,10 +28,10 @@ import time
 import signal
 from datetime import datetime
 
-#from tests.SerialMock import Serial
-from serial import Serial
-from libs.Config import Config
-from libs.XBee import XBee
+from tests.SerialMock import Serial
+#from serial import Serial
+from libs.config import Config
+from libs.xbee_wrapper import XBeeWrapper
 
 class Xbee2Console(object):
 
@@ -83,7 +83,7 @@ class Xbee2Console(object):
 
 if __name__ == "__main__":
 
-    config = Config('xbee2mqtt.yaml')
+    config = Config('config/xbee2mqtt.yaml')
 
     manager = Xbee2Console()
 
@@ -92,7 +92,7 @@ if __name__ == "__main__":
         config.get('radio', 'baudrate', 9600)
     )
 
-    xbee = XBee()
+    xbee = XBeeWrapper()
     xbee.serial = serial
     xbee.default_port_name = config.get('radio', 'default_port_name', 'serial')
     manager.xbee = xbee

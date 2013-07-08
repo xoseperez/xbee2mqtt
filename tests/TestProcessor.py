@@ -8,7 +8,7 @@ __license__ = 'GPL v3'
 
 import unittest
 
-from libs.Processor import Processor
+from libs.processor import Processor
 
 class TestProcessor(unittest.TestCase):
 

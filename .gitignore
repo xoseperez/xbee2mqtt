@@ -1,7 +1,10 @@
 *.pyo
 *.pyc
-xbee
-xbee2mqtt.yaml
+*.cfg
+!*.cfg.sample
+*.yaml
+!*.yaml.sample
 var/log/*
 var/run/*
+.venv
 .coverage

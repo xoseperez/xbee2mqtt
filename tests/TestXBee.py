@@ -11,7 +11,7 @@ import time
 import binascii
 
 from SerialMock import Serial
-from libs.XBee import XBee
+from libs.xbee_wrapper import XBeeWrapper
 
 class TestXBee(unittest.TestCase):
 
@@ -22,7 +22,7 @@ class TestXBee(unittest.TestCase):
     def setUp(self):
         self.messages = []
         self.serial = Serial(None, None)
-        self.xbee = XBee()
+        self.xbee = XBeeWrapper()
         self.xbee.default_port_name = 'serial'
         self.xbee.serial = self.serial
         self.xbee.on_message = self.on_message
@@ -42,7 +42,6 @@ class TestXBee(unittest.TestCase):
         while len(self.messages) == 0:
             time.sleep(.1)
         time.sleep(.1)
-
     def test_x90_malformed(self):
         self.serial.feed('900013a20040401122012340' + binascii.hexlify('AABBCCDD\n')) # Receive mal-formed serial packet
         self.wait()

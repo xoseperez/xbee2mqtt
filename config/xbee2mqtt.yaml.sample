@@ -4,7 +4,7 @@ general:
     stderr: /tmp/xbee2mqtt.err
     stdout: /tmp/xbee2mqtt.log
 
-    debug: True
+    logging_level: 10
     duplicate_check_window: 5
     publish_undefined_topics: False
     default_topic_pattern: /raw/xbee/{address}/{port}

@@ -20,13 +20,14 @@
 
 __author__ = "Xose Pérez"
 __contact__ = "xose.perez@gmail.com"
-__copyright__ = "Copyright (C) Xose Pérez"
+__copyright__ = "Copyright (C) 2013 Xose Pérez"
 __license__ = 'GPL v3'
 
 import binascii
-from xbee import XBee as _XBee
+import logging
+from xbee import XBee
 
-class XBee(object):
+class XBeeWrapper(object):
     """
     Helper class for the python-xbee module.
     It processes API packets into simple address/port/value groups.
@@ -40,11 +41,9 @@ class XBee(object):
 
     buffer = dict()
 
-    def log(self, message):
-        """
-        Hook to log messages
-        """
-        pass
+    def log(self, level, message):
+        if self.logger:
+            self.logger.log(level, message)
 
     def disconnect(self):
         """
@@ -59,7 +58,8 @@ class XBee(object):
         Creates an Xbee instance
         """
         try:
-            self.xbee = _XBee(self.serial, callback=self.process)
+            self.log(logging.INFO, "Connecting to Xbee")
+            self.xbee = XBee(self.serial, callback=self.process)
         except:
             return False
         return True
@@ -71,7 +71,7 @@ class XBee(object):
             0x92: ZigBee IO Data Sample Rx Indicator
         """
 
-        self.log(packet)
+        self.log(logging.DEBUG, packet)
 
         address = packet['source_addr_long']
         frame_id = int(packet['frame_id'])

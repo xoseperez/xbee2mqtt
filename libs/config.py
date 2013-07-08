@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
 
-#   Xbee to MQTT gateway
 #   Copyright (C) 2012 by Xose Pérez
 #
 #   This program is free software: you can redistribute it and/or modify
@@ -20,7 +19,7 @@
 
 __author__ = "Xose Pérez"
 __contact__ = "xose.perez@gmail.com"
-__copyright__ = "Copyright (C) Xose Pérez"
+__copyright__ = "Copyright (C) 2012-2013 Xose Pérez"
 __license__ = 'GPL v3'
 
 import yaml
