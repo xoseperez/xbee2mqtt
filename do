@@ -29,6 +29,7 @@ case "$ACTION" in
         pip install ConfigParser
         pip install pyaml
         pip install pyserial
+        pip install nose
 
         wget https://api.bitbucket.org/1.0/repositories/oojah/mosquitto/raw/tip/lib/python/mosquitto.py
         mv mosquitto.py $FOLDER/lib/python2.7/site-packages/
@@ -44,6 +45,11 @@ case "$ACTION" in
         source $FOLDER/bin/activate
         python mqtt-nts.py $ACTION
         deactivate
+        ;;
+
+    "tests")
+        source $FOLDER/bin/activate
+        .venv/bin/nosetests
         ;;
 
     *)
