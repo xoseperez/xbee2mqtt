@@ -38,6 +38,7 @@ class XBeeWrapper(object):
 
     serial = None
     xbee = None
+    logger = None
 
     buffer = dict()
 

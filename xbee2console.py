@@ -23,13 +23,11 @@ __contact__ = "xose.perez@gmail.com"
 __copyright__ = "Copyright (C) 2012-2013 Xose Pérez"
 __license__ = 'GPL v3'
 
-import sys
 import time
-import signal
-from datetime import datetime
+import logging
 
-from tests.SerialMock import Serial
-#from serial import Serial
+#from tests.SerialMock import Serial
+from serial import Serial
 from libs.config import Config
 from libs.xbee_wrapper import XBeeWrapper
 
@@ -37,36 +35,15 @@ class Xbee2Console(object):
 
     xbee = None
 
-    def log(self, message):
-        """
-        Log method.
-        TODO: replace with standard python logging facility
-        """
-        timestamp = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%f')
-        sys.stdout.write("[%s] %s\n" % (timestamp, message))
-        sys.stdout.flush()
-
-    def cleanup(self, signal, frame):
-        """
-        Clean up connections and unbind ports
-        """
-        self.xbee.disconnect()
-        self.log("[INFO] Exiting")
-        sys.exit()
+    def log(self, level, message):
+        if self.logger:
+            self.logger.log(level, message)
 
     def xbee_on_message(self, address, port, value):
         """
         Message from the radio coordinator
         """
-        self.log("[DEBUG] %s %s %s" % (address, port, value))
-
-    def xbee_connect(self):
-        """
-        Initiate connection to the radio coordinator via serial port
-        """
-        self.log("[INFO] Connecting to Xbee")
-        if not xbee.connect():
-            sys.exit()
+        self.log(logging.DEBUG, "%s %s %s" % (address, port, value))
 
     def run(self):
         """
@@ -74,28 +51,43 @@ class Xbee2Console(object):
         """
         self.xbee.on_message = self.xbee_on_message
         self.xbee.log = self.log
-        self.xbee_connect()
+        self.xbee.connect()
 
-        signal.signal(signal.SIGINT, self.cleanup)
+        try:
+            while True:
+                time.sleep(.1)
+        except KeyboardInterrupt:
+            pass
 
-        while True:
-            time.sleep(.01)
+        self.xbee.disconnect()
+        self.log(logging.INFO, "Exiting")
 
 if __name__ == "__main__":
 
     config = Config('config/xbee2mqtt.yaml')
 
-    manager = Xbee2Console()
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+
+    logger = logging.getLogger()
+    logger.setLevel(logging.DEBUG)
+    logger.addHandler(handler)
 
     serial = Serial(
         config.get('radio', 'port', '/dev/ttyUSB0'),
         config.get('radio', 'baudrate', 9600)
     )
 
+    # Sample data when using SerialMock
+    # serial.feed('920013a200406bfd090123010110008010000B00')  # IO Sample DIO12:1, ADC7(Supply Voltage):2816
+
     xbee = XBeeWrapper()
     xbee.serial = serial
     xbee.default_port_name = config.get('radio', 'default_port_name', 'serial')
-    manager.xbee = xbee
 
+    manager = Xbee2Console()
+    manager.xbee = xbee
+    manager.logger = logger
     manager.run()
 
