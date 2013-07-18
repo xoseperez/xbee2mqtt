@@ -23,6 +23,9 @@ __contact__ = "xose.perez@gmail.com"
 __copyright__ = "Copyright (C) 2013 Xose Pérez"
 __license__ = 'GPL v3'
 
+import os
+import re
+import glob
 import binascii
 import logging
 from xbee import XBee
@@ -132,3 +135,31 @@ class XBeeWrapper(object):
             pass
 
         return False
+
+    def find_devices(self, vendor_id = None, product_id = None):
+        """
+        Looks for USB devices
+        optionally filtering by with the provided vendor and product IDs
+        """
+        devices = []
+
+        for dn in glob.glob('/sys/bus/usb/devices/*'):
+            try:
+                vid = int(open(os.path.join(dn, "idVendor" )).read().strip(), 16)
+                pid = int(open(os.path.join(dn, "idProduct")).read().strip(), 16)
+                if ((vendor_id is None) or (vid == vendor_id)) and ((product_id is None) or (pid == product_id)):
+                    dns = glob.glob(os.path.join(dn, os.path.basename(dn) + "*"))
+                    for sdn in dns:
+                        for fn in glob.glob(os.path.join(sdn, "*")):
+                            if  re.search(r"\/ttyUSB[0-9]+$", fn):
+                                devices.append(os.path.join("/dev", os.path.basename(fn)))
+                            pass
+                        pass
+                    pass
+                pass
+            except ( ValueError, TypeError, AttributeError, OSError, IOError ):
+                pass
+            pass
+
+        return devices
+
