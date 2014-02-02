@@ -4,6 +4,7 @@ This daemon will monitor a coordinator XBee connected to a serial port of the co
 From version 0.3 it also support setting digital pins LOW or HIGH on remote radios.
 The radio **must** be configured in API mode.
 
+You can read about this utility in my blog: [XBee to MQTT gateway](http://tinkerman.eldiariblau.net/xbee-to-mqtt-gateway/ "XBee to MQTT gateway").
 
 ## Requirements
 
