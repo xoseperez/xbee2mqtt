@@ -8,3 +8,5 @@ var/log/*
 var/run/*
 .venv
 .coverage
+!.empty
+

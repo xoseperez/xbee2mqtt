@@ -31,7 +31,7 @@ case "$ACTION" in
         pip install pyserial
         pip install nose
 
-        wget https://api.bitbucket.org/1.0/repositories/oojah/mosquitto/raw/tip/lib/python/mosquitto.py
+        wget https://bitbucket.org/oojah/mosquitto/raw/v1.3/lib/python/mosquitto.py
         mv mosquitto.py $FOLDER/lib/python2.7/site-packages/
 
         hg clone https://xose.perez@code.google.com/r/xoseperez-python-xbee tmp
@@ -43,7 +43,7 @@ case "$ACTION" in
 
     "start" | "stop" | "restart")
         source $FOLDER/bin/activate
-        python mqtt-nts.py $ACTION
+        python xbee2mqtt.py $ACTION
         deactivate
         ;;
 
